@@ -84,6 +84,9 @@ function resetSelectedAnswers(){
         else if(TEST_QUESTIONS[x].type === QUESTION_TYPES.CHECK_BOX){
             TEST_QUESTIONS[x].selectedAnswers = [];
         }
+        else if(TEST_QUESTIONS[x].type === QUESTION_TYPES.FILL_IN_THE_BLANK){
+            TEST_QUESTIONS[x].selectedAnswer = '';
+        }
     }
 }
 
@@ -116,7 +119,7 @@ async function read(file) {
             TEST_QUESTIONS.push(newQuestion);
         }else if(questionType == QUESTION_TYPES.CHECK_BOX){
             let correctAnswers = [];
-            let answers = [];
+            let allAnswers = [];
             
             //Remove `[C]` from correct answers and append the correct and extra answers
             //to their respective arrays.
@@ -125,19 +128,27 @@ async function read(file) {
                     questionData[x] = questionData[x].replace(`[C]`, ``);
                     correctAnswers.push(questionData[x]);
                 }
-                answers.push(questionData[x]);
+                allAnswers.push(questionData[x]);
             }
-            
             let newQuestion = {
                 type: questionType,
                 questionText : questionText,
-                answers : answers,
+                answers : allAnswers,
                 correctAnswers : correctAnswers,
                 selectedAnswers : []
             };
             TEST_QUESTIONS.push(newQuestion);
+        }else if(questionType == QUESTION_TYPES.FILL_IN_THE_BLANK){
+            let correctAnswer = questionData;
+            let newQuestion = {
+                type: questionType,
+                questionText : questionText,
+                answers: correctAnswer,
+                correctAnswer : correctAnswer,
+                selectedAnswer : ''
+            };
+            TEST_QUESTIONS.push(newQuestion);
         }
-        
     }
     return file.text();
 }
@@ -167,75 +178,94 @@ function randomizeAnswers(index){
 
 //Add question and answers to HTML page 
 function loadQuestion(){
-    let QUESTION = TEST_QUESTIONS[questionIndex];
-    document.getElementById('questionTextField').innerHTML = QUESTION.questionText;
+    let question = TEST_QUESTIONS[questionIndex];
+    document.getElementById('questionTextField').innerHTML = question.questionText;
     
     //Clear out old answers.
     ANSWERS_DIV.replaceChildren([]);
     
-    for(let x = 0; x < QUESTION.answers.length; x++){addAnswer(x, QUESTION.answers[x], QUESTION.type)}
+    //Display question answers
+    for(let x = 0; x < question.answers.length; x++){addAnswer(x, question.type)}
     
-    ANSWERS_DIV.style.height = QUESTION.answers.length * 10 + 'px';
+    //Set answer container height based on number of questions
+    ANSWERS_DIV.style.height = question.answers.length * 10 + 'px';
 }
 
-//Creates a new input radio button and label containing the passed answer.
-function addAnswer(index, answer, type){
-    let currentQuestion = TEST_QUESTIONS[questionIndex];
+//Create elements for displaying answers and display them.
+function addAnswer(index, type){
+    let question = TEST_QUESTIONS[questionIndex];
     let newInputBtn = document.createElement("input");
     let newLabel = document.createElement("label");
     let answerContainer = document.createElement('div');
     let correctChoice = false;
     let isSelected = false;
+    let answer = TEST_QUESTIONS[questionIndex].answers[index];
     
     ANSWERS_DIV.appendChild(answerContainer);
     
     newInputBtn.classList.add('answerInput');
-    newInputBtn.id = 'answer'+index;
-    newInputBtn.setAttribute('name', 'answerRadio');
-    newInputBtn.setAttribute('value', answer);
     newInputBtn.setAttribute('flex', '1');
     newInputBtn.setAttribute('flex-basis', '50%');
     //Update the selected answer for the question.
-    
-    print(`Type Info: ${type} ${QUESTION_TYPES.MULTIPLE_CHOICE} ${QUESTION_TYPES.CHECK_BOX}`);
     if(type == QUESTION_TYPES.MULTIPLE_CHOICE){
+        newInputBtn.id = 'answer'+index;
+        newInputBtn.setAttribute('value', answer);
+        newInputBtn.setAttribute('name', 'answerRadio');
         newInputBtn.setAttribute('type', 'radio');
-        newInputBtn.onclick = () =>{currentQuestion.selectedAnswer = newInputBtn.value}
-        isSelected = currentQuestion.selectedAnswer === newInputBtn.value ? true : false;
+        newInputBtn.onclick = () =>{question.selectedAnswer = newInputBtn.value}
+        isSelected = question.selectedAnswer === newInputBtn.value ? true : false;
         newInputBtn.checked = isSelected;
-        correctChoice = currentQuestion.correctAnswer === newInputBtn.value;
+        correctChoice = question.correctAnswer === newInputBtn.value;
     }else if(type == QUESTION_TYPES.CHECK_BOX){
+        newInputBtn.id = 'answer'+index;
+        newInputBtn.setAttribute('value', answer);
+        newInputBtn.setAttribute('name', 'answerCheckbox');
         newInputBtn.setAttribute('type', 'checkbox');
         newInputBtn.onclick = () =>{
-            selectedAnswers = currentQuestion.selectedAnswers;
+            selectedAnswers = question.selectedAnswers;
             if(newInputBtn.checked)
-                currentQuestion.selectedAnswers.push(newInputBtn.value);
+                question.selectedAnswers.push(newInputBtn.value);
             else
-                currentQuestion.selectedAnswers = currentQuestion.selectedAnswers
+                question.selectedAnswers = question.selectedAnswers
                     .filter(val => !val.includes(newInputBtn.value));
         };
-        isSelected = currentQuestion.selectedAnswers.includes(newInputBtn.value) ? true : false;
+        isSelected = question.selectedAnswers.includes(newInputBtn.value) ? true : false;
         newInputBtn.checked = isSelected;
-        correctChoice = currentQuestion.correctAnswers.includes(newInputBtn.value);
+        correctChoice = question.correctAnswers.includes(newInputBtn.value);
+    }else if(type == QUESTION_TYPES.FILL_IN_THE_BLANK){
+        newInputBtn.setAttribute('value', question.selectedAnswer);
+        newInputBtn.onkeyup = (e) =>{question.selectedAnswer = newInputBtn.value;}
+        //Highlight this answer green if the test has been submitted and this is the correct answer.
+        correctChoice = question.correctAnswer == newInputBtn.value;
+        if(testSubmitted && correctChoice)
+            newInputBtn.classList.add('fillInCorrect');
+        //Highlight this answer red if the test has been submitted, this was the chosen answer, and it is incorrect.
+        else if(testSubmitted && !correctChoice)
+            newInputBtn.classList.add('fillInWrong');
     }
     newInputBtn.disabled = testSubmitted ? true : false;
     answerContainer.appendChild(newInputBtn);
 
-    newLabel.classList.add('answerLbl');
-    newLabel.setAttribute('for', 'answer'+index);
-    newLabel.setAttribute('value', answer);
-    newLabel.setAttribute('flex', '1');
-    newLabel.setAttribute('flex-basis', '50%');
-    //Update the selected answer for the question.
-    newLabel.onclick = () =>{currentQuestion.selectedAnswer = newLabel.textContent}
-    //Highlight this answer green if the test has been submitted and this is the correct answer.
-    if(testSubmitted && correctChoice)
-        newLabel.classList.add('correctAnswer');
-    //Highlight this answer red if the test has been submitted, this was the chosen answer, and it is incorrect.
-    else if(testSubmitted && isSelected && !correctChoice)
-        newLabel.classList.add('wrongAnswer');
-    newLabel.textContent = answer;
-    answerContainer.appendChild(newLabel);
+    if(type == QUESTION_TYPES.CHECK_BOX || type == QUESTION_TYPES.MULTIPLE_CHOICE){
+        newLabel.classList.add('answerLbl');
+        newLabel.setAttribute('for', 'answer'+index);
+        newLabel.setAttribute('value', answer);
+        //Update the selected answer for the question.
+        newLabel.onclick = () =>{question.selectedAnswer = newLabel.textContent}
+        //Highlight this answer green if the test has been submitted and this is the correct answer.
+        if(testSubmitted && correctChoice)
+            newLabel.classList.add('correctAnswer');
+        //Highlight this answer red if the test has been submitted, this was the chosen answer, and it is incorrect.
+        else if(testSubmitted && isSelected && !correctChoice)
+            newLabel.classList.add('wrongAnswer');
+        newLabel.textContent = answer;
+        answerContainer.appendChild(newLabel);
+    }else if(testSubmitted && type == QUESTION_TYPES.FILL_IN_THE_BLANK && !correctChoice){
+        newLabel.classList.add('answerLbl');
+        newLabel.setAttribute('value', question.correctAnswer);
+        newLabel.textContent = question.correctAnswer;
+        answerContainer.appendChild(newLabel);
+    }
 }
 
 

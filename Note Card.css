@@ -13,6 +13,14 @@
     padding: 5px;
 }
 
+.fillInWrong{
+    color: red;
+}
+
+.fillInCorrect{
+    color: #7CFC00;
+}
+
 #questionFieldset{
     width: 100%;
 }
