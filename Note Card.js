@@ -1,51 +1,27 @@
-const print = printValue => {console.log(printValue);};
-const QUESTIONS_ANSWERS_FILE = './Test Data.txt';
+const print = printValue => {console.log(printValue)};
+//Return random number from given range.
+const randNum = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 const TEST_QUESTIONS = [];
-
-const ANSWERS = document.getElementById('answerFieldset').getElementsByClassName('answerLbl');
-const ANSWERS_INPUT = document.getElementById('answerFieldset').getElementsByClassName('answerInput');
 const ANSWERS_DIV = document.getElementById('answersDiv');
 
-let questionIndex = 0;
+let questionIndex = 0; //Currently displayed question
 let testSubmitted = false;
-
-let rawData = undefined;
-
-
-//Reads test data from user uploaded file
-/*document.getElementById('testInput').addEventListener("change", (event) => {
-  for (let file of event.target.files) {
-    read(file);
-  }
-});*/
+let shuffleQuestions = true;
 
 
 document.getElementById('testInput').onchange = () =>{
     document.getElementById('beginTestBtn').disabled = document.getElementById("testInput").value.length > 0 ? false : true;
-    for (let file of event.target.files) {
-        read(file);
-    }
+    for (let file of event.target.files) {read(file)}
 };
 
 
-let answerLabels = document.getElementById('answerFieldset').getElementsByClassName('answerLbl');
-for(let x = 0; x < answerLabels.length; x++){
-    answerLabels[x].onclick = () =>{
-        TEST_QUESTIONS[questionIndex].selectedAnswer = answerLabels[x].value;
-    }
-}
-
-
-//Submit answers for checking
+//Set test to submitted state, display first question, correct and incorrect answers now marked.
 document.getElementById("submitBtn").onclick = () =>{
     testSubmitted = true;
     question = TEST_QUESTIONS[questionIndex];
     
-    for(let x = 0; x < question.answers.length; x++)
-        ANSWERS_INPUT[x].disabled = true;
-        
     questionIndex = 0;
-    questionLoader(TEST_QUESTIONS[questionIndex]);
+    loadQuestion();
     document.getElementById('submitBtn').disabled = true;
 };
 
@@ -56,134 +32,141 @@ document.getElementById("beginTestBtn").onclick = () =>{
     document.getElementById('nextBtn').disabled = false;
     document.getElementById('submitBtn').disabled = false;
     
+    if(shuffleQuestions){randomizeQuestions()}
+    
+    for(let x = 0; x < TEST_QUESTIONS.length; x++){randomizeAnswers(x)}
+    
     testSubmitted = false;
     questionIndex = 0;
-    //for(let x = 0; x < TEST_QUESTIONS[questionIndex].answers.length; x++)
-    //    ANSWERS_INPUT[x].disabled = false;
         
     for(let x = 0; x < TEST_QUESTIONS.length; x++)
         TEST_QUESTIONS[x].selectedAnswer = '';
         
-    questionLoader(TEST_QUESTIONS[questionIndex]);
+    loadQuestion();
 };
 
 
+//Go to previous question
 document.getElementById("prevBtn").onclick = () =>{
     questionIndex = questionIndex > 0 ? questionIndex-1 : TEST_QUESTIONS.length-1;
-    questionLoader(TEST_QUESTIONS[questionIndex]);
+    loadQuestion();
 };
 
 
+//Go to next question
 document.getElementById("nextBtn").onclick = () =>{
     questionIndex = questionIndex < TEST_QUESTIONS.length-1 ? questionIndex+1 : 0;
-    questionLoader(TEST_QUESTIONS[questionIndex]);
+    loadQuestion();
 };
-
-
-//Set current test question and answers on HTML
-function loadQuestion(question){
-    const QUESTION = document.getElementById('questionTextField').innerHTML = question.question;
-    
-    //set answers for checkbox text and select previously selected answer
-    for(let x = 0; x < question.answers.length; x++){
-        let isSelected = question.answers[x] == question.selectedAnswer;
-        let correctChoice = question.answers[x] == question.correctAnswer;
-        
-        if(ANSWERS[x].lastChild.data == undefined)
-            ANSWERS[x].innerHTML += `[${question.answers[x]}]`;
-        else
-            ANSWERS[x].lastChild.data = `[${question.answers[x]}]`;
-        
-        ANSWERS[x].value = question.answers[x];
-        
-        //check the input box if user selected this question
-        ANSWERS_INPUT[x].checked = question.answers[x] == question.selectedAnswer ? true : false;
-        
-        ANSWERS[x].classList.remove('correctAnswer');
-        ANSWERS[x].classList.remove('wrongAnswer');
-        
-        if(testSubmitted && correctChoice)
-            ANSWERS[x].classList.add('correctAnswer');
-        else if(testSubmitted && isSelected && !correctChoice)
-            ANSWERS[x].classList.add('wrongAnswer');
-        
-    }
-}
 
 
 //https://stackoverflow.com/questions/16505333/get-the-data-of-uploaded-file-in-javascript
 //Reads test data from user uploaded file and splits the test data in arrays containing objects with question data.
 async function read(file) {
-    rawData = await file.text();
+    let data = await file.text();
+    let questions = data.split('[Q]'); //Split up data for each question into arrays.
     
-    let questions = rawData.split('[Q]');
+    //Take the question data and put it into a question object
     for(let x = 0; x < questions.length; x++){
-        let lines = questions[x].split(`\n`);
-        if(lines.length < 2)
-            continue;
-        lines = lines.filter(val => val);
+        //Split data based on new lines since each line contains different data and remove empty values.
+        let questionData = questions[x].split(`\n`).filter(val => val);
+        
+        //If the question is missing too much information skip it.
+        if(questionData.length < 3){continue}
+            
         let newQuestion = {
-            type: lines.shift(),
-            question : lines.shift(),
-            answers : lines,
-            correctAnswer : lines[0],
+            type: questionData.shift(),
+            question : questionData.shift(),
+            answers : questionData,
+            correctAnswer : questionData[0],
             selectedAnswer : ''
         };
         
         TEST_QUESTIONS.push(newQuestion);
     }
-        
     return file.text();
 }
 
 
-
-function questionLoader(question){
-    const QUESTION = document.getElementById('questionTextField').innerHTML = question.question;
-    
-    ANSWERS_DIV.replaceChildren([]);
-    
-    //set answers for checkbox text and select previously selected answer
-    for(let x = 0; x < question.answers.length; x++){
-        let isSelected = question.answers[x] == question.selectedAnswer;
-        let correctChoice = question.answers[x] == question.correctAnswer;
-        addRadioQuestion(x, question.answers[x], isSelected, correctChoice);
+//Shuffle questions.
+function randomizeQuestions(){
+    for(let x = 0; x < TEST_QUESTIONS.length-1; x++){
+        let randLoc = randNum(x+1, TEST_QUESTIONS.length-1);
+        let temp = TEST_QUESTIONS[randLoc];
+        TEST_QUESTIONS[randLoc] = TEST_QUESTIONS[x];
+        TEST_QUESTIONS[x] = temp;
     }
 }
 
 
-function addRadioQuestion(index, answer, isSelected, correctChoice){
-    let newInput = document.createElement("input");
+//Shuffle answers.
+function randomizeAnswers(index){
+    let answers = TEST_QUESTIONS[index].answers;
+    for(let x = 0; x < answers.length-1; x++){
+        let randLoc = randNum(x+1, answers.length-1);
+        let temp = answers[randLoc];
+        answers[randLoc] = answers[x];
+        answers[x] = temp;
+    }
+}
+
+//Add question and answers to HTML page 
+function loadQuestion(){
+    let QUESTION = TEST_QUESTIONS[questionIndex];
+    document.getElementById('questionTextField').innerHTML = QUESTION.question;
+    
+    //Clear out old answers.
+    ANSWERS_DIV.replaceChildren([]);
+    
+    for(let x = 0; x < QUESTION.answers.length; x++){
+        let isSelected = QUESTION.answers[x] == QUESTION.selectedAnswer;
+        let correctChoice = QUESTION.answers[x] == QUESTION.correctAnswer;
+        addRadioAnswer(x, QUESTION.answers[x], isSelected, correctChoice);
+    }
+}
+
+//Creates a new input radio button and label containing the passed answer.
+function addRadioAnswer(index, answer, isSelected, correctChoice){
+    let newInputBtn = document.createElement("input");
+    let newLabel = document.createElement("label");
     let answerContainer = document.createElement('div');
-    let newLbl = document.createElement("label");
     
     ANSWERS_DIV.appendChild(answerContainer);
     
-    newInput.classList.add('answerInput');
-    newInput.id = 'answer'+index;
-    newInput.setAttribute('type', 'radio');
-    newInput.setAttribute('name', 'answerRadio');
-    newInput.setAttribute('value', answer);
-    newInput.setAttribute('flex', '1');
-    newInput.setAttribute('flex-basis', '50%');
-    if(testSubmitted && correctChoice)
-        newInput.classList.add('correctAnswer');
-    else if(testSubmitted && isSelected && !correctChoice)
-        newInput.classList.add('wrongAnswer');
-    newInput.checked = isSelected ? true : false;
-    newInput.disabled = true;
-    answerContainer.appendChild(newInput);
+    newInputBtn.classList.add('answerInput');
+    newInputBtn.id = 'answer'+index;
+    newInputBtn.setAttribute('type', 'radio');
+    newInputBtn.setAttribute('name', 'answerRadio');
+    newInputBtn.setAttribute('value', answer);
+    newInputBtn.setAttribute('flex', '1');
+    newInputBtn.setAttribute('flex-basis', '50%');
+    //Update the selected answer for the question.
+    newInputBtn.onclick = () =>{TEST_QUESTIONS[questionIndex].selectedAnswer = newInputBtn.value}
+    newInputBtn.disabled = testSubmitted ? true : false;
+    newInputBtn.checked = isSelected ? true : false;
+    answerContainer.appendChild(newInputBtn);
 
-    newLbl.classList.add('answerLbl');
-    newLbl.setAttribute('for', 'answer'+index);
-    newLbl.setAttribute('flex', '1');
-    newLbl.setAttribute('flex-basis', '50%');
-    newLbl.textContent = answer;
-    answerContainer.appendChild(newLbl);
+    newLabel.classList.add('answerLbl');
+    newLabel.setAttribute('for', 'answer'+index);
+    newLabel.setAttribute('value', answer);
+    newLabel.setAttribute('flex', '1');
+    newLabel.setAttribute('flex-basis', '50%');
+    //Update the selected answer for the question.
+    newLabel.onclick = () =>{TEST_QUESTIONS[questionIndex].selectedAnswer = newLabel.textContent}
+    //Highlight this answer green if the test has been submitted and this is the correct answer.
+    if(testSubmitted && correctChoice)
+        newLabel.classList.add('correctAnswer');
+    //Highlight this answer red if the test has been submitted, this was the chosen answer, and it is incorrect.
+    else if(testSubmitted && isSelected && !correctChoice)
+        newLabel.classList.add('wrongAnswer');
+    newLabel.textContent = answer;
+    answerContainer.appendChild(newLabel);
 }
 
 
-
+//////////////////////////////////////////////////////////////////////////
+////////////////////        Element Testing             //////////////////
+//////////////////////////////////////////////////////////////////////////
 let testFS = document.getElementById('testFieldSet');
 
 let testElement = document.createElement("input");

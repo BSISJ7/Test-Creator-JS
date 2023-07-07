@@ -6,6 +6,10 @@
     background-color: #7CFC00;
 }
 
+.selectedCorrectAnswer{
+    background-color: #7CFC00;
+}
+
 .centralDiv{
     width: 50%;
     margin-left: auto;
