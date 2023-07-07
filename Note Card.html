@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+
+<html lang='en'>
+    <header>
+        <meta name='viewport' content="width=device-width, initial-scale=1.0"/>
+        <meta charset='utf-8'>
+        
+        <title>Mini Test Taker</title>
+        <link rel='stylesheet' href='Note Card.css'>
+    </header>
+    
+    <main>
+    
+        <section>
+            <div id='noteCardDiv' class='centralDiv'>
+                <fieldset id='questionFieldset'>
+                    <legend>Question</legend>
+                    <textField id='questionTextField'><textField>
+                </fieldset>
+                
+                <fieldset id='answerFieldset'>
+                    <legend>Answers</legend>
+                    
+                    <div id='answersDiv'>
+                        <!--<label from='answerInput' class='answerLbl'><input class='answerInput' type='radio' name='answerInput' value='answerOne' disabled='true'></label>
+                        <label from='answerInput' class='answerLbl'><input class='answerInput' type='radio' name='answerInput' value='answerTwo' disabled='true'></label>
+                        <label from='answerInput' class='answerLbl'><input class='answerInput' type='radio' name='answerInput' value='answerThree' disabled='true'></label>
+                        <label from='answerInput' class='answerLbl'><input class='answerInput' type='radio' name='answerInput' value='answerFour' disabled='true'></label>--></br></br>
+                    </div>
+                    
+                    <div id='prvNextBtnDiv'>
+                        <button id='prevBtn' type='submit' disabled='true'>Previous Question</button><button id='nextBtn' type='submit' disabled='true'>Next Question</button>
+                    </div>
+                    
+                    <div id='submitDiv'>
+                        <button id='submitBtn' type='submit' disabled='true'>Submit Test</button>
+                    </div>
+                </fieldset>
+            </div></br>
+            
+            <div class='centralDiv'>
+                <textField>Upload Test File</textField>
+                <input id='testInput' type="file" accept=".txt">
+            </div></br>
+            
+            <div class='centralDiv'>
+                <button id='beginTestBtn' disabled='true'>Begin Test</button>
+            </div>
+            
+            <div class='centralDiv'>
+                <fieldset id='testFieldSet'>
+                    <legend>HTML Testing Zone</legend>
+                </fieldset>
+            </div>
+        </section>
+        
+    </main>
+    
+    <script src='Note Card.js'></script>
+    
+</html>
+

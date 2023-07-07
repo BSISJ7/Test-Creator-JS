@@ -1,0 +1,55 @@
+.wrongAnswer{
+    background-color: red;
+}
+
+.correctAnswer{
+    background-color: #7CFC00;
+}
+
+.centralDiv{
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 5px;
+}
+
+#answerFieldset{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+testFieldSet{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+#answersDiv{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    //flex: 0 0 50%;
+    margin-bottom: 20px;
+}
+
+
+#prvNextBtnDiv{
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 120;
+    display: flex;
+    flex-direction: row;
+    //align-items: center;
+    justify-content: space-between;
+    flex: 0 0 50%;
+    margin-bottom: 20px;
+}
+
+#submitDiv{
+    margin: 120;
+    flex: 0 0 50%;
+}
